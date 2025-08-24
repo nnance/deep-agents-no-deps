@@ -1,0 +1,53 @@
+{
+  "name": "deep-agents",
+  "version": "0.1.0",
+  "description": "A TypeScript-based Node.js package implementing a Deep Agent system with planning, sub-agents, file system access, and memory management capabilities",
+  "keywords": [
+    "ai",
+    "agents",
+    "llm",
+    "planning",
+    "filesystem",
+    "memory",
+    "typescript",
+    "nodejs"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "test:watch": "npm run build && node --test --watch dist/**/*.test.js",
+    "dev": "npm run build:watch",
+    "prepublishOnly": "npm run clean && npm run build && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nnance/deep-agents-no-deps.git"
+  },
+  "author": "Nick Nance",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "peerDependencies": {},
+  "dependencies": {}
+}
