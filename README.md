@@ -76,6 +76,9 @@ npm run build
 # Run tests
 npm test
 
+# Run tests with coverage
+npm run test:coverage
+
 # Development mode (watch for changes)
 npm run dev
 
