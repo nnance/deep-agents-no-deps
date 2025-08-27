@@ -1,4 +1,4 @@
-import { LogLevel, LogFormat, LogFormatter } from './types.js';
+import { LogFormat, type LogFormatter, type LogLevel } from './types.js';
 
 /**
  * Default log formatter implementation
@@ -8,16 +8,16 @@ export class DefaultLogFormatter implements LogFormatter {
 
   format(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
     const timestamp = new Date().toISOString();
-    
+
     if (this.logFormat === LogFormat.Json) {
       return JSON.stringify({
         timestamp,
         level,
         message,
-        ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
+        ...(meta && Object.keys(meta).length > 0 ? { meta } : {}),
       });
     }
-    
+
     // Text format
     const metaString = meta && Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${metaString}`;
@@ -33,7 +33,7 @@ export class JsonLogFormatter implements LogFormatter {
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
+      ...(meta && Object.keys(meta).length > 0 ? { meta } : {}),
     });
   }
 }

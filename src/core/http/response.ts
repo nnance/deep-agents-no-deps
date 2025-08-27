@@ -2,8 +2,8 @@
  * HTTP response implementation
  */
 
-import { IncomingHttpHeaders } from 'http';
-import { Response } from './types.js';
+import type { IncomingHttpHeaders } from 'node:http';
+import type { Response } from './types.js';
 
 /**
  * HTTP Response implementation

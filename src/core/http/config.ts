@@ -2,25 +2,25 @@
  * HTTP configuration management
  */
 
-import { GlobalConfig, BackoffConfig, LoggingConfig } from './types.js';
+import type { GlobalConfig } from './types.js';
 
 /**
  * Default configuration values
  */
 export const DEFAULT_CONFIG: GlobalConfig = {
   maxRetries: 3,
-  requestTimeout: 30000,  // 30 seconds
-  globalTimeout: 120000,  // 2 minutes
+  requestTimeout: 30000, // 30 seconds
+  globalTimeout: 120000, // 2 minutes
   backoff: {
-    initialDelay: 1000,   // 1 second
+    initialDelay: 1000, // 1 second
     multiplier: 2,
-    maxDelay: 30000,      // 30 seconds
-    jitter: true
+    maxDelay: 30000, // 30 seconds
+    jitter: true,
   },
   logging: {
     level: 'info',
-    logRetries: true
-  }
+    logRetries: true,
+  },
 };
 
 /**
@@ -37,12 +37,12 @@ export function setGlobalConfig(config: Partial<GlobalConfig>): void {
     ...config,
     backoff: {
       ...globalConfig.backoff,
-      ...config.backoff
+      ...config.backoff,
     },
     logging: {
       ...globalConfig.logging,
-      ...config.logging
-    }
+      ...config.logging,
+    },
   };
 }
 

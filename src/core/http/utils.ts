@@ -2,44 +2,44 @@
  * Utility functions for HTTP operations
  */
 
-import { URL } from 'url';
-import { BackoffConfig } from './types.js';
+import { URL } from 'node:url';
+import type { BackoffConfig } from './types.js';
 
 /**
  * Build URL with query parameters
  */
-export function buildUrl(baseUrl: string, params?: Record<string, string | number | boolean>): string {
+export function buildUrl(
+  baseUrl: string,
+  params?: Record<string, string | number | boolean>
+): string {
   const url = new URL(baseUrl);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.set(key, String(value));
     });
   }
-  
+
   return url.toString();
 }
 
 /**
  * Calculate backoff delay with optional jitter
  */
-export function calculateBackoffDelay(
-  attempt: number,
-  config: BackoffConfig
-): number {
+export function calculateBackoffDelay(attempt: number, config: BackoffConfig): number {
   const { initialDelay, multiplier, maxDelay, jitter } = config;
-  
+
   // Calculate exponential backoff: initialDelay * (multiplier ^ attempt)
-  let delay = initialDelay * Math.pow(multiplier, attempt);
-  
+  let delay = initialDelay * multiplier ** attempt;
+
   // Apply maximum delay cap
   delay = Math.min(delay, maxDelay);
-  
+
   // Apply jitter if enabled: actualDelay = delay * (0.5 + random() * 0.5)
   if (jitter) {
     delay = delay * (0.5 + Math.random() * 0.5);
   }
-  
+
   return Math.floor(delay);
 }
 
@@ -62,9 +62,9 @@ export function isRetryableError(error: Error & { code?: string }): boolean {
     'ENOTFOUND',
     'EAI_AGAIN',
     'ENETUNREACH',
-    'EHOSTUNREACH'
+    'EHOSTUNREACH',
   ];
-  
+
   return error.code ? retryableCodes.includes(error.code) : false;
 }
 
@@ -103,7 +103,7 @@ export function serializeBody(body: unknown, contentType: string): string {
  * Sleep for specified milliseconds
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

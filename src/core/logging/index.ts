@@ -2,40 +2,38 @@
  * Logging module exports
  */
 
-// Types and interfaces
-export {
-  LogLevel,
-  LogFormat,
-  Transport,
-  Logger,
-  LoggerOptions,
-  LogFormatter,
-  LoggerProvider,
-  FileTransportOptions,
-  HttpTransportOptions,
-  ConsoleTransportOptions
-} from './types.js';
-
 // Formatters
 export {
   DefaultLogFormatter,
   JsonLogFormatter,
-  TextLogFormatter
+  TextLogFormatter,
 } from './formatters.js';
+// Logger implementation
+export {
+  createLogger,
+  DefaultLoggerProvider,
+  LoggerImpl,
+  loggerProvider,
+} from './logger.js';
 
 // Transports
 export {
   BaseTransport,
   ConsoleTransport,
+  CustomTransport,
   FileTransport,
   HttpTransport,
-  CustomTransport
 } from './transports.js';
-
-// Logger implementation
+// Types and interfaces
 export {
-  LoggerImpl,
-  DefaultLoggerProvider,
-  loggerProvider,
-  createLogger
-} from './logger.js';
+  ConsoleTransportOptions,
+  FileTransportOptions,
+  HttpTransportOptions,
+  LogFormat,
+  LogFormatter,
+  Logger,
+  LoggerOptions,
+  LoggerProvider,
+  LogLevel,
+  Transport,
+} from './types.js';

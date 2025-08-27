@@ -3,16 +3,16 @@
  */
 
 import {
+  createClient,
   get,
+  HttpError,
   post,
   put,
+  RetryExhaustedError,
   request,
   requestStream,
-  createClient,
   setGlobalConfig,
-  HttpError,
   TimeoutError,
-  RetryExhaustedError
 } from '../src/core/http/index.js';
 
 async function basicUsageExamples() {
@@ -22,7 +22,7 @@ async function basicUsageExamples() {
     // Simple GET request
     console.log('1. Making a simple GET request...');
     const getResponse = await get('https://httpbin.org/get', {
-      params: { key1: 'value1', key2: 42 }
+      params: { key1: 'value1', key2: 42 },
     });
     console.log('Status:', getResponse.status);
     console.log('Response:', getResponse.json());
@@ -32,7 +32,7 @@ async function basicUsageExamples() {
     console.log('2. Making a POST request with JSON body...');
     const postData = { name: 'John Doe', email: 'john@example.com' };
     const postResponse = await post('https://httpbin.org/post', postData, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
     console.log('Status:', postResponse.status);
     const postResult = postResponse.json<any>();
@@ -53,13 +53,12 @@ async function basicUsageExamples() {
       method: 'GET',
       headers: {
         'User-Agent': 'Deep-Agents-HTTP-Client/1.0',
-        'Custom-Header': 'test-value'
+        'Custom-Header': 'test-value',
       },
-      timeout: 10000
+      timeout: 10000,
     });
     console.log('Status:', customResponse.status);
     console.log();
-
   } catch (error) {
     console.error('Error in basic examples:', error);
   }
@@ -75,19 +74,19 @@ async function retryAndErrorHandlingExamples() {
       initialDelay: 1000,
       multiplier: 2,
       maxDelay: 10000,
-      jitter: true
+      jitter: true,
     },
     logging: {
       level: 'info',
-      logRetries: true
-    }
+      logRetries: true,
+    },
   });
 
   try {
     // Example with timeout
     console.log('1. Testing timeout handling...');
     await get('https://httpbin.org/delay/10', {
-      timeout: 2000  // 2 second timeout
+      timeout: 2000, // 2 second timeout
     });
   } catch (error) {
     if (error instanceof TimeoutError) {
@@ -113,7 +112,7 @@ async function retryAndErrorHandlingExamples() {
     // Example that would trigger retries (500 error)
     console.log('3. Testing 500 error with retries...');
     await get('https://httpbin.org/status/500', {
-      maxRetries: 2  // Override global setting for this request
+      maxRetries: 2, // Override global setting for this request
     });
   } catch (error) {
     if (error instanceof RetryExhaustedError) {
@@ -135,16 +134,16 @@ async function clientConfigurationExamples() {
       initialDelay: 500,
       multiplier: 1.5,
       maxDelay: 5000,
-      jitter: false
+      jitter: false,
     },
     headers: {
-      'Authorization': 'Bearer fake-token',
-      'User-Agent': 'MyApp/1.0'
+      Authorization: 'Bearer fake-token',
+      'User-Agent': 'MyApp/1.0',
     },
     logging: {
       level: 'debug',
-      logRetries: true
-    }
+      logRetries: true,
+    },
   });
 
   try {
@@ -158,13 +157,12 @@ async function clientConfigurationExamples() {
     console.log('2. Client with different configuration...');
     const fastClient = createClient({
       maxRetries: 1,
-      requestTimeout: 5000
+      requestTimeout: 5000,
     });
 
     const fastResponse = await fastClient.get('https://httpbin.org/get');
     console.log('Fast client response status:', fastResponse.status);
     console.log();
-
   } catch (error) {
     console.error('Error in client examples:', error);
   }
@@ -175,19 +173,21 @@ async function streamingExample() {
 
   try {
     console.log('1. Streaming text response...');
-    let chunks: string[] = [];
+    const chunks: string[] = [];
 
-    await requestStream({
-      url: 'https://httpbin.org/stream/5',
-      method: 'GET'
-    }, (chunk: string) => {
-      console.log('Received chunk:', chunk.trim());
-      chunks.push(chunk);
-    });
+    await requestStream(
+      {
+        url: 'https://httpbin.org/stream/5',
+        method: 'GET',
+      },
+      (chunk: string) => {
+        console.log('Received chunk:', chunk.trim());
+        chunks.push(chunk);
+      }
+    );
 
     console.log(`✓ Streaming completed. Received ${chunks.length} chunks.`);
     console.log();
-
   } catch (error) {
     console.error('Error in streaming example:', error);
   }
@@ -199,28 +199,28 @@ async function advancedUsageExamples() {
   try {
     // Example with multiple retry configurations for different endpoints
     console.log('1. Different retry strategies for different endpoints...');
-    
+
     // Critical API - more retries
-    const criticalClient = createClient({
+    const _criticalClient = createClient({
       maxRetries: 5,
       backoff: {
         initialDelay: 2000,
         multiplier: 2,
         maxDelay: 30000,
-        jitter: true
-      }
+        jitter: true,
+      },
     });
 
     // Fast API - fewer retries
-    const fastClient = createClient({
+    const _fastClient = createClient({
       maxRetries: 1,
       requestTimeout: 3000,
       backoff: {
         initialDelay: 500,
         multiplier: 1.5,
         maxDelay: 2000,
-        jitter: false
-      }
+        jitter: false,
+      },
     });
 
     console.log('✓ Clients configured with different strategies');
@@ -233,25 +233,25 @@ async function advancedUsageExamples() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Custom-Header': 'custom-value'
+        Accept: 'application/json',
+        'X-Custom-Header': 'custom-value',
       },
       params: {
         filter: 'active',
         sort: 'created_date',
-        limit: 50
+        limit: 50,
       },
       body: {
         data: {
           items: [1, 2, 3],
           metadata: {
             source: 'deep-agents',
-            version: '1.0'
-          }
-        }
+            version: '1.0',
+          },
+        },
       },
       timeout: 8000,
-      maxRetries: 3
+      maxRetries: 3,
     });
 
     console.log('Complex request status:', complexResponse.status);
@@ -259,7 +259,6 @@ async function advancedUsageExamples() {
     console.log('Request echo - method:', complexData.method);
     console.log('Request echo - URL:', complexData.url);
     console.log();
-
   } catch (error) {
     console.error('Error in advanced examples:', error);
   }
@@ -289,5 +288,5 @@ export {
   clientConfigurationExamples,
   streamingExample,
   advancedUsageExamples,
-  runAllExamples
+  runAllExamples,
 };

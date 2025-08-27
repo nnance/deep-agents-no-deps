@@ -33,7 +33,11 @@
     "test:watch": "npm run build && node --test --watch dist/**/*.test.js",
     "test:coverage": "npm run build && node --experimental-test-coverage --test dist/**/*.test.js",
     "dev": "npm run build:watch",
-    "prepublishOnly": "npm run clean && npm run build && npm run test"
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "prepublishOnly": "npm run clean && npm run lint && npm run build && npm run test"
   },
   "repository": {
     "type": "git",
@@ -45,10 +49,9 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@biomejs/biome": "^2.2.2",
     "@types/node": "^18.0.0",
-    "ts-node": "^10.9.0"
-  },
-  "peerDependencies": {},
-  "dependencies": {}
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
 }

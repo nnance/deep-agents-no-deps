@@ -3,10 +3,10 @@
  * Using Node.js built-in test runner
  */
 
-import { test, describe } from 'node:test';
-import { strictEqual, ok } from 'node:assert';
-import { DeepAgent, version } from '../src/index';
+import { ok, strictEqual } from 'node:assert';
+import { describe, test } from 'node:test';
 import { CoreUtils } from '../src/core/index';
+import { DeepAgent, version } from '../src/index';
 
 describe('Deep Agent System', () => {
   test('should export version', () => {
