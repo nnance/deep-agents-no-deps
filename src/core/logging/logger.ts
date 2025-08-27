@@ -10,7 +10,6 @@ export class LoggerImpl implements Logger {
 
   constructor(options: LoggerOptions) {
     this.options = options;
-    this.formatter = new DefaultLogFormatter(options.format);
 
     // Configure transports with the logger's format
     this.configureTransports();

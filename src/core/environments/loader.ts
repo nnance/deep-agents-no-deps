@@ -122,7 +122,9 @@ export function loadEnv(options: LoadEnvOptions = {}): LoadEnvResult {
     // Log parsing errors
     if (errors.length > 0 && !opts.silent) {
       console.warn(`[environments] Parsing errors in ${filePath}:`);
-      errors.forEach((error) => console.warn(`[environments] ${error}`));
+      errors.forEach((error) => {
+        console.warn(`[environments] ${error}`);
+      });
     }
 
     // Apply environment variables

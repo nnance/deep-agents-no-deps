@@ -14,9 +14,9 @@ describe('Environment Management', () => {
     originalEnv = { ...process.env };
 
     // Clear test environment variables
-    delete process.env.TEST_VAR1;
-    delete process.env.TEST_VAR2;
-    delete process.env.EXISTING_VAR;
+    delete process.env['TEST_VAR1'];
+    delete process.env['TEST_VAR2'];
+    delete process.env['EXISTING_VAR'];
   });
 
   afterEach(() => {
@@ -163,7 +163,7 @@ QUOTED_EMPTY=""
       const { loadEnv } = require('../src/core/environments');
 
       // Set an existing environment variable
-      process.env.TEST_OVERRIDE = 'original';
+      process.env['TEST_OVERRIDE'] = 'original';
 
       // Try to load (will fail to find file, but we can test the logic)
       const _result = loadEnv({
@@ -173,10 +173,10 @@ QUOTED_EMPTY=""
       });
 
       // Should not have overridden the existing variable
-      strictEqual(process.env.TEST_OVERRIDE, 'original');
+      strictEqual(process.env['TEST_OVERRIDE'], 'original');
 
       // Clean up
-      delete process.env.TEST_OVERRIDE;
+      delete process.env['TEST_OVERRIDE'];
     });
   });
 });

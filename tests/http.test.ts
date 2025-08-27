@@ -32,7 +32,9 @@ before(async () => {
 
     // Collect request body
     let body = '';
-    req.on('data', (chunk) => (body += chunk));
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
     req.on('end', () => {
       // Routes for testing
       switch (path) {
