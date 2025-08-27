@@ -1,24 +1,22 @@
-import { Logger, LoggerOptions, LogLevel, LoggerProvider, LogFormat } from './types.js';
 import { DefaultLogFormatter } from './formatters.js';
 import { BaseTransport } from './transports.js';
+import { type Logger, type LoggerOptions, type LoggerProvider, LogLevel } from './types.js';
 
 /**
  * Logger implementation
  */
 export class LoggerImpl implements Logger {
   private options: LoggerOptions;
-  private formatter: DefaultLogFormatter;
 
   constructor(options: LoggerOptions) {
     this.options = options;
-    this.formatter = new DefaultLogFormatter(options.format);
-    
+
     // Configure transports with the logger's format
     this.configureTransports();
   }
 
   private configureTransports(): void {
-    this.options.transports.forEach(transport => {
+    this.options.transports.forEach((transport) => {
       if (transport instanceof BaseTransport) {
         // Update the formatter for BaseTransport instances
         (transport as any).formatter = new DefaultLogFormatter(this.options.format);
@@ -49,7 +47,7 @@ export class LoggerImpl implements Logger {
     }
 
     // Send to all transports
-    this.options.transports.forEach(transport => {
+    this.options.transports.forEach((transport) => {
       try {
         transport.log(level, message, meta);
       } catch (error) {

@@ -1,9 +1,16 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as http from 'http';
-import * as https from 'https';
-import { LogLevel, LogFormat, Transport, FileTransportOptions, HttpTransportOptions, ConsoleTransportOptions } from './types.js';
+import * as fs from 'node:fs';
+import * as http from 'node:http';
+import * as https from 'node:https';
+import * as path from 'node:path';
 import { DefaultLogFormatter } from './formatters.js';
+import {
+  type ConsoleTransportOptions,
+  type FileTransportOptions,
+  type HttpTransportOptions,
+  LogFormat,
+  LogLevel,
+  type Transport,
+} from './types.js';
 
 /**
  * Base transport class that handles formatting
@@ -17,7 +24,11 @@ export abstract class BaseTransport implements Transport {
 
   abstract log(level: LogLevel, message: string, meta?: Record<string, unknown>): void;
 
-  protected formatMessage(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
+  protected formatMessage(
+    level: LogLevel,
+    message: string,
+    meta?: Record<string, unknown>
+  ): string {
     return this.formatter.format(level, message, meta);
   }
 }
@@ -35,7 +46,7 @@ export class ConsoleTransport extends BaseTransport {
 
   log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
     const formattedMessage = this.formatMessage(level, message, meta);
-    
+
     if (this.colorize) {
       const coloredMessage = this.colorizeMessage(level, formattedMessage);
       console.log(coloredMessage);
@@ -47,8 +58,8 @@ export class ConsoleTransport extends BaseTransport {
   private colorizeMessage(level: LogLevel, message: string): string {
     const colors = {
       [LogLevel.Error]: '\x1b[31m', // Red
-      [LogLevel.Warn]: '\x1b[33m',  // Yellow
-      [LogLevel.Info]: '\x1b[36m',  // Cyan
+      [LogLevel.Warn]: '\x1b[33m', // Yellow
+      [LogLevel.Info]: '\x1b[36m', // Cyan
       [LogLevel.Debug]: '\x1b[37m', // White
     };
     const reset = '\x1b[0m';
@@ -69,7 +80,7 @@ export class FileTransport extends BaseTransport {
     this.filename = options.filename;
     this.maxSize = options.maxSize;
     this.maxFiles = options.maxFiles;
-    
+
     // Ensure directory exists
     const dir = path.dirname(this.filename);
     if (!fs.existsSync(dir)) {
@@ -79,7 +90,7 @@ export class FileTransport extends BaseTransport {
 
   log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
     const formattedMessage = this.formatMessage(level, message, meta);
-    
+
     try {
       // Check file size and rotate if necessary
       if (this.maxSize && fs.existsSync(this.filename)) {
@@ -88,8 +99,8 @@ export class FileTransport extends BaseTransport {
           this.rotateFile();
         }
       }
-      
-      fs.appendFileSync(this.filename, formattedMessage + '\n');
+
+      fs.appendFileSync(this.filename, `${formattedMessage}\n`);
     } catch (error) {
       console.error('Failed to write to log file:', error);
     }
@@ -97,13 +108,13 @@ export class FileTransport extends BaseTransport {
 
   private rotateFile(): void {
     if (!this.maxFiles) return;
-    
+
     try {
       // Rotate existing files
       for (let i = this.maxFiles - 1; i > 0; i--) {
         const currentFile = `${this.filename}.${i}`;
         const nextFile = `${this.filename}.${i + 1}`;
-        
+
         if (fs.existsSync(currentFile)) {
           if (i === this.maxFiles - 1) {
             fs.unlinkSync(currentFile); // Delete the oldest file
@@ -112,7 +123,7 @@ export class FileTransport extends BaseTransport {
           }
         }
       }
-      
+
       // Move current file to .1
       if (fs.existsSync(this.filename)) {
         fs.renameSync(this.filename, `${this.filename}.1`);
@@ -137,7 +148,7 @@ export class HttpTransport extends BaseTransport {
     this.method = options.method ?? 'POST';
     this.headers = {
       'Content-Type': 'application/json',
-      ...options.headers
+      ...options.headers,
     };
   }
 
@@ -146,7 +157,7 @@ export class HttpTransport extends BaseTransport {
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
+      ...(meta && Object.keys(meta).length > 0 ? { meta } : {}),
     };
 
     const postData = JSON.stringify(logData);
@@ -161,8 +172,8 @@ export class HttpTransport extends BaseTransport {
       method: this.method,
       headers: {
         ...this.headers,
-        'Content-Length': Buffer.byteLength(postData)
-      }
+        'Content-Length': Buffer.byteLength(postData),
+      },
     };
 
     const req = httpModule.request(options, (res) => {

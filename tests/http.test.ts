@@ -2,28 +2,27 @@
  * HTTP library tests
  */
 
-import { describe, it, before, after } from 'node:test';
 import * as assert from 'node:assert';
 import * as http from 'node:http';
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
+import { after, before, describe, it } from 'node:test';
 import {
+  createClient,
   get,
+  HttpError,
   post,
   put,
-  createClient,
-  setGlobalConfig,
-  HttpError,
-  TimeoutError,
   RetryExhaustedError,
-  DEFAULT_CONFIG,
-  resetGlobalConfig
+  resetGlobalConfig,
+  setGlobalConfig,
+  TimeoutError,
 } from '../src/core/http/index.js';
 
 let server: http.Server;
 let baseUrl: string;
 
 // Test server setup
-let retryAttempts: Record<string, number> = {};
+const retryAttempts: Record<string, number> = {};
 
 before(async () => {
   server = http.createServer((req, res) => {
@@ -33,18 +32,22 @@ before(async () => {
 
     // Collect request body
     let body = '';
-    req.on('data', chunk => body += chunk);
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
     req.on('end', () => {
       // Routes for testing
       switch (path) {
         case '/success':
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ 
-            message: 'success', 
-            method,
-            body: body || undefined,
-            query: Object.fromEntries(url.searchParams)
-          }));
+          res.end(
+            JSON.stringify({
+              message: 'success',
+              method,
+              body: body || undefined,
+              query: Object.fromEntries(url.searchParams),
+            })
+          );
           break;
 
         case '/error-500':
@@ -64,25 +67,28 @@ before(async () => {
           }, 2000);
           break;
 
-        case '/retry-then-success':
-          const clientId = req.headers['x-client-id'] as string || 'default';
+        case '/retry-then-success': {
+          const clientId = (req.headers['x-client-id'] as string) || 'default';
           if (!retryAttempts[clientId]) {
             retryAttempts[clientId] = 0;
           }
           retryAttempts[clientId]++;
-          
+
           if (retryAttempts[clientId] < 3) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Server Error');
           } else {
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 
-              message: 'success after retries',
-              attempts: retryAttempts[clientId]
-            }));
+            res.end(
+              JSON.stringify({
+                message: 'success after retries',
+                attempts: retryAttempts[clientId],
+              })
+            );
             delete retryAttempts[clientId]; // Reset for next test
           }
           break;
+        }
 
         case '/stream':
           res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -127,7 +133,7 @@ describe('HTTP Library', () => {
     it('should make successful GET request', async () => {
       const response = await get(`${baseUrl}/success`);
       assert.strictEqual(response.status, 200);
-      
+
       const data = response.json<any>();
       assert.strictEqual(data.message, 'success');
       assert.strictEqual(data.method, 'GET');
@@ -137,7 +143,7 @@ describe('HTTP Library', () => {
       const body = { test: 'data' };
       const response = await post(`${baseUrl}/success`, body);
       assert.strictEqual(response.status, 200);
-      
+
       const data = response.json<any>();
       assert.strictEqual(data.method, 'POST');
       assert.deepStrictEqual(JSON.parse(data.body), body);
@@ -147,7 +153,7 @@ describe('HTTP Library', () => {
       const body = { update: 'data' };
       const response = await put(`${baseUrl}/success`, body);
       assert.strictEqual(response.status, 200);
-      
+
       const data = response.json<any>();
       assert.strictEqual(data.method, 'PUT');
       assert.deepStrictEqual(JSON.parse(data.body), body);
@@ -156,7 +162,7 @@ describe('HTTP Library', () => {
     it('should handle query parameters', async () => {
       const params = { param1: 'value1', param2: 42, param3: true };
       const response = await get(`${baseUrl}/success`, { params });
-      
+
       const data = response.json<any>();
       assert.strictEqual(data.query.param1, 'value1');
       assert.strictEqual(data.query.param2, '42');
@@ -177,11 +183,11 @@ describe('HTTP Library', () => {
     });
 
     it('should handle 500 errors with retry', async () => {
-      setGlobalConfig({ 
+      setGlobalConfig({
         maxRetries: 2,
-        globalTimeout: 120000  // 2 minutes - should be plenty
+        globalTimeout: 120000, // 2 minutes - should be plenty
       });
-      
+
       try {
         await get(`${baseUrl}/error-500`);
         assert.fail('Expected RetryExhaustedError to be thrown');
@@ -207,22 +213,22 @@ describe('HTTP Library', () => {
 
   describe('Retry Logic', () => {
     it('should retry and eventually succeed', async () => {
-      setGlobalConfig({ 
+      setGlobalConfig({
         maxRetries: 3,
-        backoff: { 
-          initialDelay: 100, 
-          multiplier: 1.5, 
-          maxDelay: 1000, 
-          jitter: false 
-        } 
+        backoff: {
+          initialDelay: 100,
+          multiplier: 1.5,
+          maxDelay: 1000,
+          jitter: false,
+        },
       });
 
       const clientId = `test-${Date.now()}`;
       const response = await get(`${baseUrl}/retry-then-success`, {
-        headers: { 'x-client-id': clientId }
+        headers: { 'x-client-id': clientId },
       });
       assert.strictEqual(response.status, 200);
-      
+
       const data = response.json<any>();
       assert.strictEqual(data.message, 'success after retries');
       assert.strictEqual(data.attempts, 3);
@@ -233,7 +239,7 @@ describe('HTTP Library', () => {
     it('should create client with custom configuration', async () => {
       const client = createClient({
         maxRetries: 1,
-        requestTimeout: 5000
+        requestTimeout: 5000,
       });
 
       const response = await client.get(`${baseUrl}/success`);
@@ -242,7 +248,7 @@ describe('HTTP Library', () => {
 
     it('should override global config with request config', async () => {
       setGlobalConfig({ maxRetries: 5 });
-      
+
       try {
         await get(`${baseUrl}/error-500`, { maxRetries: 1 });
         assert.fail('Expected RetryExhaustedError to be thrown');

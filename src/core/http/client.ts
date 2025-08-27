@@ -2,34 +2,32 @@
  * Core HTTP client implementation with retry logic
  */
 
-import * as http from 'http';
-import * as https from 'https';
-import { URL } from 'url';
-import { OutgoingHttpHeaders } from 'http';
+import type { OutgoingHttpHeaders } from 'node:http';
+import * as http from 'node:http';
+import * as https from 'node:https';
+import { URL } from 'node:url';
 
-import { Logger, createLogger, LogFormat } from '../logging/index.js';
-import {
-  RequestOptions,
-  Response,
-  HttpError,
-  TimeoutError,
-  RetryExhaustedError,
-  NetworkError,
-  BackoffConfig,
-  GlobalConfig,
-  ClientConfig
-} from './types.js';
-import { ResponseImpl } from './response.js';
+import { createLogger, LogFormat, type Logger } from '../logging/index.js';
 import { getGlobalConfig } from './config.js';
+import { ResponseImpl } from './response.js';
+import {
+  type ClientConfig,
+  type GlobalConfig,
+  HttpError,
+  NetworkError,
+  type RequestOptions,
+  type Response,
+  RetryExhaustedError,
+  TimeoutError,
+} from './types.js';
 import {
   buildUrl,
   calculateBackoffDelay,
-  isRetryableStatus,
-  isRetryableError as isRetryableNetworkError,
   getContentType,
+  isRetryableError as isRetryableNetworkError,
+  isRetryableStatus,
   serializeBody,
   sleep,
-  createTimeoutPromise
 } from './utils.js';
 
 /**
@@ -41,7 +39,7 @@ export class HttpClient {
 
   constructor(clientConfig?: ClientConfig) {
     const globalConfig = getGlobalConfig();
-    
+
     this.config = {
       maxRetries: clientConfig?.maxRetries ?? globalConfig.maxRetries,
       requestTimeout: clientConfig?.requestTimeout ?? globalConfig.requestTimeout,
@@ -50,18 +48,18 @@ export class HttpClient {
         initialDelay: clientConfig?.backoff?.initialDelay ?? globalConfig.backoff.initialDelay,
         multiplier: clientConfig?.backoff?.multiplier ?? globalConfig.backoff.multiplier,
         maxDelay: clientConfig?.backoff?.maxDelay ?? globalConfig.backoff.maxDelay,
-        jitter: clientConfig?.backoff?.jitter ?? globalConfig.backoff.jitter
+        jitter: clientConfig?.backoff?.jitter ?? globalConfig.backoff.jitter,
       },
       logging: {
         level: clientConfig?.logging?.level ?? globalConfig.logging.level,
-        logRetries: clientConfig?.logging?.logRetries ?? globalConfig.logging.logRetries
-      }
+        logRetries: clientConfig?.logging?.logRetries ?? globalConfig.logging.logRetries,
+      },
     };
 
     this.logger = createLogger({
       level: this.config.logging.level as any,
       format: LogFormat.Text,
-      transports: []
+      transports: [],
     });
   }
 
@@ -71,11 +69,11 @@ export class HttpClient {
   async request(options: RequestOptions): Promise<Response> {
     const startTime = Date.now();
     const config = this.mergeRequestConfig(options);
-    
+
     this.logger.debug('Starting HTTP request', {
       method: options.method,
       url: options.url,
-      maxRetries: config.maxRetries
+      maxRetries: config.maxRetries,
     });
 
     let lastError: Error | null = null;
@@ -95,17 +93,16 @@ export class HttpClient {
         }
 
         const response = await this.executeRequest(options, config, attemptNumber);
-        
+
         this.logger.debug('HTTP request successful', {
           method: options.method,
           url: options.url,
           status: response.status,
           attempts: attemptNumber + 1,
-          elapsedTime: Date.now() - startTime
+          elapsedTime: Date.now() - startTime,
         });
 
         return response;
-
       } catch (error) {
         lastError = error as Error;
         attemptNumber++;
@@ -123,7 +120,7 @@ export class HttpClient {
         // We can retry - calculate backoff and sleep
         const retryNumber = attemptNumber; // which retry this will be (1-based)
         const delay = calculateBackoffDelay(retryNumber - 1, config.backoff);
-        
+
         if (config.logging.logRetries) {
           this.logger.warn('HTTP request failed, retrying', {
             method: options.method,
@@ -131,7 +128,7 @@ export class HttpClient {
             attempt: attemptNumber,
             maxAttempts: maxAttempts,
             delay,
-            error: (error as Error).message
+            error: (error as Error).message,
           });
         }
 
@@ -152,14 +149,11 @@ export class HttpClient {
   /**
    * Stream HTTP response
    */
-  async requestStream(
-    options: RequestOptions,
-    onChunk: (chunk: string) => void
-  ): Promise<void> {
+  async requestStream(options: RequestOptions, onChunk: (chunk: string) => void): Promise<void> {
     const config = this.mergeRequestConfig(options);
     const url = buildUrl(options.url, options.params);
     const urlObj = new URL(url);
-    
+
     const requestOptions: http.RequestOptions = {
       hostname: urlObj.hostname,
       port: urlObj.port,
@@ -167,46 +161,44 @@ export class HttpClient {
       method: options.method,
       headers: {
         ...config.headers,
-        ...options.headers
+        ...options.headers,
       },
-      timeout: config.requestTimeout
+      timeout: config.requestTimeout,
     };
 
     return new Promise((resolve, reject) => {
       const client = urlObj.protocol === 'https:' ? https : http;
-      
+
       const req = client.request(requestOptions, (res) => {
         res.on('data', (chunk: Buffer) => {
           onChunk(chunk.toString());
         });
-        
+
         res.on('end', () => {
           resolve();
         });
-        
+
         res.on('error', reject);
       });
 
       req.on('timeout', () => {
         req.destroy();
-        reject(new TimeoutError(
-          `Request timeout after ${config.requestTimeout}ms`,
-          config.requestTimeout,
-          config.requestTimeout
-        ));
+        reject(
+          new TimeoutError(
+            `Request timeout after ${config.requestTimeout}ms`,
+            config.requestTimeout,
+            config.requestTimeout
+          )
+        );
       });
 
       req.on('error', (error: Error & { code?: string }) => {
-        reject(new NetworkError(
-          `Network error: ${error.message}`,
-          error.code || 'UNKNOWN',
-          error
-        ));
+        reject(new NetworkError(`Network error: ${error.message}`, error.code || 'UNKNOWN', error));
       });
 
       // Send request body for POST/PUT
       if (options.method !== 'GET' && options.body !== undefined) {
-        const contentType = getContentType(options.headers as Record<string, unknown> || {});
+        const contentType = getContentType((options.headers as Record<string, unknown>) || {});
         const serializedBody = serializeBody(options.body, contentType);
         req.write(serializedBody);
       }
@@ -221,14 +213,14 @@ export class HttpClient {
   private async executeRequest(
     options: RequestOptions,
     config: any,
-    attempt: number
+    _attempt: number
   ): Promise<Response> {
     const url = buildUrl(options.url, options.params);
     const urlObj = new URL(url);
-    
+
     const headers: OutgoingHttpHeaders = {
       ...config.headers,
-      ...options.headers
+      ...options.headers,
     };
 
     // Set content-type for POST/PUT if body exists and no content-type set
@@ -244,19 +236,19 @@ export class HttpClient {
       path: urlObj.pathname + urlObj.search,
       method: options.method,
       headers,
-      timeout: config.requestTimeout
+      timeout: config.requestTimeout,
     };
 
     return new Promise((resolve, reject) => {
       const client = urlObj.protocol === 'https:' ? https : http;
-      
+
       const req = client.request(requestOptions, (res) => {
         const chunks: Buffer[] = [];
-        
+
         res.on('data', (chunk: Buffer) => {
           chunks.push(chunk);
         });
-        
+
         res.on('end', () => {
           const body = Buffer.concat(chunks);
           const response = new ResponseImpl(
@@ -268,22 +260,26 @@ export class HttpClient {
 
           // Check if status indicates retryable error
           if (isRetryableStatus(response.status)) {
-            reject(new HttpError(
-              `HTTP ${response.status}: ${response.statusText}`,
-              response.status,
-              response.statusText,
-              response.headers,
-              response.body
-            ));
+            reject(
+              new HttpError(
+                `HTTP ${response.status}: ${response.statusText}`,
+                response.status,
+                response.statusText,
+                response.headers,
+                response.body
+              )
+            );
           } else if (response.status >= 400) {
             // Non-retryable client or server error
-            reject(new HttpError(
-              `HTTP ${response.status}: ${response.statusText}`,
-              response.status,
-              response.statusText,
-              response.headers,
-              response.body
-            ));
+            reject(
+              new HttpError(
+                `HTTP ${response.status}: ${response.statusText}`,
+                response.status,
+                response.statusText,
+                response.headers,
+                response.body
+              )
+            );
           } else {
             resolve(response);
           }
@@ -292,19 +288,17 @@ export class HttpClient {
 
       req.on('timeout', () => {
         req.destroy();
-        reject(new TimeoutError(
-          `Request timeout after ${config.requestTimeout}ms`,
-          config.requestTimeout,
-          config.requestTimeout
-        ));
+        reject(
+          new TimeoutError(
+            `Request timeout after ${config.requestTimeout}ms`,
+            config.requestTimeout,
+            config.requestTimeout
+          )
+        );
       });
 
       req.on('error', (error: Error & { code?: string }) => {
-        reject(new NetworkError(
-          `Network error: ${error.message}`,
-          error.code || 'UNKNOWN',
-          error
-        ));
+        reject(new NetworkError(`Network error: ${error.message}`, error.code || 'UNKNOWN', error));
       });
 
       // Send request body for POST/PUT
@@ -341,24 +335,12 @@ export class HttpClient {
   }
 
   /**
-   * Check if error should trigger a retry
-   */
-  private isRetryableError(error: Error, attempt: number, maxRetries: number): boolean {
-    // attempt is 0-based, so we compare with maxRetries directly
-    if (attempt >= maxRetries) {
-      return false;
-    }
-
-    return this.canRetry(error);
-  }
-
-  /**
    * Merge request configuration with client and global defaults
    */
   private mergeRequestConfig(options: RequestOptions): any {
     // Always get fresh global config to respect setGlobalConfig calls
     const currentGlobalConfig = getGlobalConfig();
-    
+
     // Precedence: request options > current global config > client config (from constructor)
     return {
       maxRetries: options.maxRetries ?? currentGlobalConfig.maxRetries,
@@ -367,14 +349,14 @@ export class HttpClient {
       backoff: {
         ...currentGlobalConfig.backoff,
         ...this.config.backoff,
-        ...options.backoff
+        ...options.backoff,
       },
       logging: {
         ...currentGlobalConfig.logging,
         ...this.config.logging,
-        ...options.logging
+        ...options.logging,
       },
-      headers: {}
+      headers: {},
     };
   }
 }

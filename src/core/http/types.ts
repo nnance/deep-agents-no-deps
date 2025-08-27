@@ -2,7 +2,7 @@
  * Core HTTP library types and interfaces
  */
 
-import { IncomingHttpHeaders, OutgoingHttpHeaders } from 'http';
+import type { IncomingHttpHeaders, OutgoingHttpHeaders } from 'node:http';
 
 /**
  * HTTP methods supported by the library

@@ -28,13 +28,6 @@
     "experimentalDecorators": false,
     "emitDecoratorMetadata": false
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*",
-    "examples/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "tests/**/*", "examples/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

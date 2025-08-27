@@ -2,14 +2,14 @@
  * Example usage of the logging library
  */
 
-import { 
-  createLogger, 
-  LogLevel, 
-  LogFormat, 
-  ConsoleTransport, 
-  FileTransport, 
+import {
+  ConsoleTransport,
+  CustomTransport,
+  createLogger,
+  FileTransport,
   HttpTransport,
-  CustomTransport
+  LogFormat,
+  LogLevel,
 } from '../src/core/logging/index.js';
 
 // Example 1: Basic console logging
@@ -17,7 +17,7 @@ console.log('\n=== Basic Console Logging ===');
 const basicLogger = createLogger({
   level: LogLevel.Info,
   format: LogFormat.Text,
-  transports: [new ConsoleTransport({ colorize: true })]
+  transports: [new ConsoleTransport({ colorize: true })],
 });
 
 basicLogger.info('Application is starting...');
@@ -30,20 +30,20 @@ const fileLogger = createLogger({
   level: LogLevel.Debug,
   format: LogFormat.Json,
   transports: [
-    new FileTransport({ 
+    new FileTransport({
       filename: 'logs/app.log',
       maxSize: 1024 * 1024, // 1MB
-      maxFiles: 5
-    })
-  ]
+      maxFiles: 5,
+    }),
+  ],
 });
 
 fileLogger.debug('Debug information', { query: 'SELECT * FROM users', duration: 45 });
 fileLogger.info('User action', { userId: 123, action: 'login', timestamp: Date.now() });
-fileLogger.error('Database connection failed', { 
+fileLogger.error('Database connection failed', {
   error: 'Connection timeout',
   host: 'localhost',
-  port: 5432
+  port: 5432,
 });
 
 // Example 3: Multiple transports
@@ -54,18 +54,18 @@ const multiLogger = createLogger({
   transports: [
     new ConsoleTransport({ colorize: true }),
     new FileTransport({ filename: 'logs/errors.log' }),
-    new HttpTransport({ 
+    new HttpTransport({
       url: 'http://localhost:3000/logs',
-      headers: { 'Authorization': 'Bearer your-token' }
-    })
-  ]
+      headers: { Authorization: 'Bearer your-token' },
+    }),
+  ],
 });
 
 multiLogger.warn('System load is high', { cpu: 85, memory: 78 });
-multiLogger.error('Critical system failure', { 
+multiLogger.error('Critical system failure', {
   component: 'database',
   severity: 'critical',
-  affectedUsers: 1500
+  affectedUsers: 1500,
 });
 
 // Example 4: Custom transport
@@ -84,10 +84,7 @@ class EmailTransport extends CustomTransport {
 const customLogger = createLogger({
   level: LogLevel.Info,
   format: LogFormat.Text,
-  transports: [
-    new ConsoleTransport(),
-    new EmailTransport()
-  ]
+  transports: [new ConsoleTransport(), new EmailTransport()],
 });
 
 customLogger.info('Normal operation'); // Only goes to console
@@ -98,7 +95,7 @@ console.log('\n=== Log Levels Demonstration ===');
 const levelLogger = createLogger({
   level: LogLevel.Warn, // Only warn and error will be logged
   format: LogFormat.Text,
-  transports: [new ConsoleTransport()]
+  transports: [new ConsoleTransport()],
 });
 
 console.log('Logger configured with WARN level - only warn and error messages will appear:');
@@ -112,7 +109,7 @@ console.log('\n=== Structured Logging with Metadata ===');
 const structuredLogger = createLogger({
   level: LogLevel.Info,
   format: LogFormat.Json,
-  transports: [new ConsoleTransport()]
+  transports: [new ConsoleTransport()],
 });
 
 // Request logging
@@ -122,7 +119,7 @@ structuredLogger.info('HTTP Request', {
   userAgent: 'Mozilla/5.0...',
   ip: '192.168.1.1',
   responseTime: 125,
-  statusCode: 200
+  statusCode: 200,
 });
 
 // Business logic logging
@@ -132,7 +129,7 @@ structuredLogger.info('Order processed', {
   amount: 99.99,
   currency: 'USD',
   paymentMethod: 'credit_card',
-  processingTime: 250
+  processingTime: 250,
 });
 
 // Error logging with context
@@ -143,7 +140,7 @@ structuredLogger.error('Payment failed', {
   errorCode: 'CARD_DECLINED',
   errorMessage: 'Insufficient funds',
   retryAttempt: 3,
-  lastRetry: new Date().toISOString()
+  lastRetry: new Date().toISOString(),
 });
 
 console.log('\n=== Logging Examples Complete ===');

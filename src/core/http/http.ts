@@ -3,17 +3,17 @@
  */
 
 import { HttpClient } from './client.js';
-import {
-  RequestOptions,
+import { getGlobalConfig, setGlobalConfig as setConfig } from './config.js';
+import type {
+  ClientConfig,
   GetOptions,
+  GlobalConfig,
+  HttpClient as IHttpClient,
   PostOptions,
   PutOptions,
+  RequestOptions,
   Response,
-  ClientConfig,
-  GlobalConfig,
-  HttpClient as IHttpClient
 } from './types.js';
-import { setGlobalConfig as setConfig, getGlobalConfig } from './config.js';
 
 /**
  * Default HTTP client instance
@@ -27,7 +27,7 @@ export async function get(url: string, options?: GetOptions): Promise<Response> 
   const requestOptions: RequestOptions = {
     url,
     method: 'GET',
-    ...options
+    ...options,
   };
   return defaultClient.request(requestOptions);
 }
@@ -40,7 +40,7 @@ export async function post(url: string, body: unknown, options?: PostOptions): P
     url,
     method: 'POST',
     body,
-    ...options
+    ...options,
   };
   return defaultClient.request(requestOptions);
 }
@@ -53,7 +53,7 @@ export async function put(url: string, body: unknown, options?: PutOptions): Pro
     url,
     method: 'PUT',
     body,
-    ...options
+    ...options,
   };
   return defaultClient.request(requestOptions);
 }
@@ -80,13 +80,13 @@ export async function requestStream(
  */
 export function createClient(config?: ClientConfig): IHttpClient {
   const client = new HttpClient(config);
-  
+
   return {
     async get(url: string, options?: GetOptions): Promise<Response> {
       const requestOptions: RequestOptions = {
         url,
         method: 'GET',
-        ...options
+        ...options,
       };
       return client.request(requestOptions);
     },
@@ -96,7 +96,7 @@ export function createClient(config?: ClientConfig): IHttpClient {
         url,
         method: 'POST',
         body,
-        ...options
+        ...options,
       };
       return client.request(requestOptions);
     },
@@ -106,7 +106,7 @@ export function createClient(config?: ClientConfig): IHttpClient {
         url,
         method: 'PUT',
         body,
-        ...options
+        ...options,
       };
       return client.request(requestOptions);
     },
@@ -117,7 +117,7 @@ export function createClient(config?: ClientConfig): IHttpClient {
 
     async requestStream(options: RequestOptions, onChunk: (chunk: string) => void): Promise<void> {
       return client.requestStream(options, onChunk);
-    }
+    },
   };
 }
 
