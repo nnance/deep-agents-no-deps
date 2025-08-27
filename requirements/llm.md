@@ -99,6 +99,11 @@ All providers must implement a consistent TypeScript interface providing:
 - Unified error handling
 - Common configuration patterns
 
+#### Provider REST APIs
+- [OpenAI](https://platform.openai.com/docs/api-reference)
+- [Anthropic](https://docs.anthropic.com/claude/api)
+- [Ollama](https://raw.githubusercontent.com/ollama/ollama/refs/heads/main/docs/api.md)
+
 #### Functional Programming
 - Immutable data structures
 - Pure functions where possible
