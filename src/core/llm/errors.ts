@@ -1,6 +1,6 @@
 /**
  * LLM Provider Error Hierarchy
- * 
+ *
  * Defines custom error classes for consistent error handling across all LLM providers.
  * Follows functional programming principles with immutable error data and clear error types.
  */
@@ -27,7 +27,7 @@ export class LLMError extends Error {
     if (provider !== undefined) this.provider = provider;
     if (requestId !== undefined) this.requestId = requestId;
     this.metadata = Object.freeze({ ...metadata });
-    
+
     // Maintain proper stack trace for where our error was thrown
     Error.captureStackTrace(this, LLMError);
   }
@@ -164,7 +164,7 @@ export class TimeoutError extends NetworkError {
       value: 'TIMEOUT_ERROR',
       writable: false,
       enumerable: true,
-      configurable: false
+      configurable: false,
     });
     this.timeoutMs = timeoutMs;
   }

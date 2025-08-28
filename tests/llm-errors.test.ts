@@ -3,36 +3,35 @@
  * Tests error class instantiation, inheritance, and utility functions
  */
 
-import { test, describe } from 'node:test';
-import { strictEqual, ok, deepStrictEqual } from 'node:assert';
+import { deepStrictEqual, ok, strictEqual } from 'node:assert';
+import { describe, test } from 'node:test';
 import {
-  LLMError,
-  ConfigurationError,
-  ValidationError,
   AuthenticationError,
   AuthorizationError,
-  RateLimitError,
-  QuotaExceededError,
-  NetworkError,
-  TimeoutError,
-  ModelError,
+  ConfigurationError,
   ContentFilterError,
-  TokenLimitError,
-  ResponseParsingError,
-  UnexpectedResponseError,
-  ProviderUnavailableError,
-  ProviderNotFoundError,
+  getErrorSeverity,
   isLLMError,
   isRetryableError,
-  getErrorSeverity
+  LLMError,
+  ModelError,
+  NetworkError,
+  ProviderNotFoundError,
+  ProviderUnavailableError,
+  QuotaExceededError,
+  RateLimitError,
+  ResponseParsingError,
+  TimeoutError,
+  TokenLimitError,
+  UnexpectedResponseError,
+  ValidationError,
 } from '../src/core/llm/errors.js';
 
 describe('LLM Provider Errors - Phase 1.1', () => {
-
   describe('Base LLMError', () => {
     test('should create error with required properties', () => {
       const error = new LLMError('Test message', 'TEST_CODE');
-      
+
       strictEqual(error.name, 'LLMError');
       strictEqual(error.message, 'Test message');
       strictEqual(error.code, 'TEST_CODE');
@@ -51,7 +50,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'req-123',
         metadata
       );
-      
+
       strictEqual(error.message, 'Full test message');
       strictEqual(error.code, 'FULL_TEST_CODE');
       strictEqual(error.provider, 'openai');
@@ -62,10 +61,10 @@ describe('LLM Provider Errors - Phase 1.1', () => {
     test('should freeze metadata object', () => {
       const metadata = { mutable: 'test' };
       const error = new LLMError('Test', 'TEST', undefined, undefined, metadata);
-      
+
       // Metadata should be frozen
       ok(Object.isFrozen(error.metadata));
-      
+
       // Original metadata should not affect error metadata
       metadata.mutable = 'changed';
       strictEqual(error.metadata['mutable'], 'test');
@@ -75,7 +74,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('ConfigurationError', () => {
     test('should extend LLMError with field property', () => {
       const error = new ConfigurationError('Invalid config', 'apiKey', 'openai');
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ConfigurationError');
       strictEqual(error.code, 'CONFIGURATION_ERROR');
@@ -85,7 +84,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
 
     test('should work without optional field', () => {
       const error = new ConfigurationError('General config error');
-      
+
       strictEqual(error.field, undefined);
       strictEqual(error.provider, undefined);
     });
@@ -95,7 +94,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
     test('should store validation errors as readonly array', () => {
       const validationErrors = ['Error 1', 'Error 2', 'Error 3'];
       const error = new ValidationError('Validation failed', validationErrors, 'anthropic');
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ValidationError');
       strictEqual(error.code, 'VALIDATION_ERROR');
@@ -108,7 +107,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('AuthenticationError', () => {
     test('should create authentication error', () => {
       const error = new AuthenticationError('Invalid API key', 'openai', 'req-123');
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'AuthenticationError');
       strictEqual(error.code, 'AUTHENTICATION_ERROR');
@@ -120,7 +119,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('AuthorizationError', () => {
     test('should create authorization error', () => {
       const error = new AuthorizationError('Access denied', 'openai', 'req-456');
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'AuthorizationError');
       strictEqual(error.code, 'AUTHORIZATION_ERROR');
@@ -130,7 +129,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('RateLimitError', () => {
     test('should create rate limit error with retry after', () => {
       const error = new RateLimitError('Rate limited', 'openai', 'req-789', 60);
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'RateLimitError');
       strictEqual(error.code, 'RATE_LIMIT_ERROR');
@@ -148,7 +147,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'req-101',
         resetTime
       );
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'QuotaExceededError');
       strictEqual(error.quotaType, 'daily');
@@ -159,7 +158,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('NetworkError', () => {
     test('should create network error with status code', () => {
       const error = new NetworkError('Connection failed', 'openai', 'req-102', 503);
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'NetworkError');
       strictEqual(error.code, 'NETWORK_ERROR');
@@ -169,7 +168,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
 
     test('should create timeout network error', () => {
       const error = new NetworkError('Timeout', 'openai', 'req-103', undefined, true);
-      
+
       strictEqual(error.isTimeout, true);
       strictEqual(error.statusCode, undefined);
     });
@@ -178,7 +177,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('TimeoutError', () => {
     test('should extend NetworkError with timeout properties', () => {
       const error = new TimeoutError('Request timeout', 30000, 'openai', 'req-104');
-      
+
       ok(error instanceof NetworkError);
       ok(error instanceof LLMError);
       strictEqual(error.name, 'TimeoutError');
@@ -191,7 +190,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('ModelError', () => {
     test('should create model error with model name', () => {
       const error = new ModelError('Model not found', 'gpt-5', 'openai', 'req-105');
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ModelError');
       strictEqual(error.model, 'gpt-5');
@@ -207,7 +206,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'openai',
         'req-106'
       );
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ContentFilterError');
       strictEqual(error.filterType, 'output');
@@ -217,14 +216,8 @@ describe('LLM Provider Errors - Phase 1.1', () => {
 
   describe('TokenLimitError', () => {
     test('should create token limit error with token counts', () => {
-      const error = new TokenLimitError(
-        'Token limit exceeded',
-        4096,
-        5000,
-        'openai',
-        'req-107'
-      );
-      
+      const error = new TokenLimitError('Token limit exceeded', 4096, 5000, 'openai', 'req-107');
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'TokenLimitError');
       strictEqual(error.maxTokens, 4096);
@@ -241,7 +234,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'anthropic',
         'req-108'
       );
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ResponseParsingError');
       strictEqual(error.rawResponse, rawResponse);
@@ -258,7 +251,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'ollama',
         'req-109'
       );
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'UnexpectedResponseError');
       strictEqual(error.statusCode, 500);
@@ -274,7 +267,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         'req-110',
         120
       );
-      
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ProviderUnavailableError');
       strictEqual(error.retryAfter, 120);
@@ -284,11 +277,8 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('ProviderNotFoundError', () => {
     test('should create provider not found error with available providers', () => {
       const availableProviders = ['openai', 'anthropic'] as const;
-      const error = new ProviderNotFoundError(
-        'Provider not found',
-        availableProviders
-      );
-      
+      const error = new ProviderNotFoundError('Provider not found', availableProviders);
+
       ok(error instanceof LLMError);
       strictEqual(error.name, 'ProviderNotFoundError');
       strictEqual(error.availableProviders.length, 2);
@@ -321,7 +311,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         const rateLimitError = new RateLimitError('Rate limited');
         const providerError = new ProviderUnavailableError('Unavailable');
         const serverError = new UnexpectedResponseError('Server error', 500);
-        
+
         ok(isRetryableError(networkError));
         ok(isRetryableError(timeoutError));
         ok(isRetryableError(rateLimitError));
@@ -334,7 +324,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         const configError = new ConfigurationError('Bad config');
         const clientError = new UnexpectedResponseError('Client error', 400);
         const standardError = new Error('Standard error');
-        
+
         ok(!isRetryableError(authError));
         ok(!isRetryableError(configError));
         ok(!isRetryableError(clientError));
@@ -348,7 +338,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         const authError = new AuthenticationError('Auth failed');
         const configError = new ConfigurationError('Config invalid');
         const validationError = new ValidationError('Validation failed', ['error']);
-        
+
         strictEqual(getErrorSeverity(authError), 'critical');
         strictEqual(getErrorSeverity(configError), 'critical');
         strictEqual(getErrorSeverity(validationError), 'critical');
@@ -358,7 +348,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         const authzError = new AuthorizationError('Access denied');
         const quotaError = new QuotaExceededError('Quota exceeded', 'daily');
         const filterError = new ContentFilterError('Filtered', 'output', 'content_filter');
-        
+
         strictEqual(getErrorSeverity(authzError), 'high');
         strictEqual(getErrorSeverity(quotaError), 'high');
         strictEqual(getErrorSeverity(filterError), 'high');
@@ -368,7 +358,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
         const rateError = new RateLimitError('Rate limited');
         const tokenError = new TokenLimitError('Token limit', 100, 200);
         const modelError = new ModelError('Model error');
-        
+
         strictEqual(getErrorSeverity(rateError), 'medium');
         strictEqual(getErrorSeverity(tokenError), 'medium');
         strictEqual(getErrorSeverity(modelError), 'medium');
@@ -377,7 +367,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
       test('should return low severity for other LLM errors', () => {
         const networkError = new NetworkError('Network failure');
         const parseError = new ResponseParsingError('Parse failed');
-        
+
         strictEqual(getErrorSeverity(networkError), 'low');
         strictEqual(getErrorSeverity(parseError), 'low');
       });
@@ -385,7 +375,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
       test('should return medium severity for non-LLM errors', () => {
         const standardError = new Error('Standard error');
         const notError = 'not an error';
-        
+
         strictEqual(getErrorSeverity(standardError), 'medium');
         strictEqual(getErrorSeverity(notError), 'medium');
       });
@@ -395,7 +385,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
   describe('Error Inheritance', () => {
     test('should maintain proper inheritance chain', () => {
       const timeoutError = new TimeoutError('Timeout', 5000);
-      
+
       ok(timeoutError instanceof TimeoutError);
       ok(timeoutError instanceof NetworkError);
       ok(timeoutError instanceof LLMError);
@@ -413,7 +403,7 @@ describe('LLM Provider Errors - Phase 1.1', () => {
     test('should freeze arrays in error properties', () => {
       const validationError = new ValidationError('Validation failed', ['error1', 'error2']);
       const notFoundError = new ProviderNotFoundError('Not found', ['openai', 'anthropic']);
-      
+
       ok(Object.isFrozen(validationError.validationErrors));
       ok(Object.isFrozen(notFoundError.availableProviders));
     });
@@ -421,9 +411,9 @@ describe('LLM Provider Errors - Phase 1.1', () => {
     test('should freeze metadata objects', () => {
       const metadata = { key: 'value', nested: { prop: 'test' } };
       const error = new LLMError('Test', 'TEST', undefined, undefined, metadata);
-      
+
       ok(Object.isFrozen(error.metadata));
-      
+
       // Original metadata should not affect error
       metadata.key = 'changed';
       strictEqual(error.metadata['key'], 'value');

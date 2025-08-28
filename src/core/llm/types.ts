@@ -1,6 +1,6 @@
 /**
  * LLM Provider Core Types
- * 
+ *
  * Defines the foundational interfaces and types for the LLM provider system.
  * This follows functional programming principles with immutable data structures
  * and consistent interfaces across all providers.
@@ -13,10 +13,7 @@ export interface ProviderInfo {
   readonly capabilities: readonly ProviderCapability[];
 }
 
-export type ProviderCapability = 
-  | 'text-generation'
-  | 'streaming'
-  | 'structured-output';
+export type ProviderCapability = 'text-generation' | 'streaming' | 'structured-output';
 
 // Configuration interfaces
 export interface ProviderConfig {
@@ -50,12 +47,7 @@ export interface LLMResponse {
   readonly metadata: ResponseMetadata;
 }
 
-export type FinishReason = 
-  | 'stop'
-  | 'length'
-  | 'content_filter'
-  | 'tool_calls'
-  | 'error';
+export type FinishReason = 'stop' | 'length' | 'content_filter' | 'tool_calls' | 'error';
 
 export interface TokenUsage {
   readonly promptTokens: number;
@@ -78,7 +70,7 @@ export interface LLMProvider {
   readonly config: ProviderConfig;
 
   generateText(options: GenerationOptions): Promise<LLMResponse>;
-  
+
   // Health check for provider availability
   health(): Promise<ProviderHealth>;
 }
@@ -112,16 +104,10 @@ export interface ValidationResult {
 export type ProviderType = 'openai' | 'anthropic' | 'ollama';
 
 export interface ProviderRegistry {
-  register<T extends ProviderConfig>(
-    type: ProviderType, 
-    factory: ProviderFactory<T>
-  ): void;
-  
-  create(
-    type: ProviderType, 
-    config: ProviderConfig
-  ): Promise<LLMProvider>;
-  
+  register<T extends ProviderConfig>(type: ProviderType, factory: ProviderFactory<T>): void;
+
+  create(type: ProviderType, config: ProviderConfig): Promise<LLMProvider>;
+
   getProviderTypes(): readonly ProviderType[];
   hasProvider(type: ProviderType): boolean;
 }

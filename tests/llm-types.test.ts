@@ -3,30 +3,29 @@
  * Tests type validation and interface compliance for the core LLM types
  */
 
-import { test, describe } from 'node:test';
-import { strictEqual, ok, deepStrictEqual } from 'node:assert';
+import { deepStrictEqual, ok, strictEqual } from 'node:assert';
+import { describe, test } from 'node:test';
 import type {
-  ProviderInfo,
-  ProviderConfig,
   GenerationOptions,
-  LLMResponse,
-  TokenUsage,
-  ResponseMetadata,
   LLMProvider,
+  LLMResponse,
+  ProviderConfig,
   ProviderHealth,
+  ProviderInfo,
+  ProviderType,
   RequestContext,
+  ResponseMetadata,
+  TokenUsage,
   ValidationResult,
-  ProviderType
 } from '../src/core/llm/types.js';
 
 describe('LLM Provider Types - Phase 1.1', () => {
-  
   describe('ProviderInfo', () => {
     test('should have required readonly properties', () => {
       const providerInfo: ProviderInfo = {
         name: 'test-provider',
         version: '1.0.0',
-        capabilities: ['text-generation', 'streaming'] as const
+        capabilities: ['text-generation', 'streaming'] as const,
       };
 
       strictEqual(providerInfo.name, 'test-provider');
@@ -37,8 +36,8 @@ describe('LLM Provider Types - Phase 1.1', () => {
     test('should support all capability types', () => {
       const capabilities: ProviderInfo['capabilities'] = [
         'text-generation',
-        'streaming', 
-        'structured-output'
+        'streaming',
+        'structured-output',
       ] as const;
 
       strictEqual(capabilities.length, 3);
@@ -51,7 +50,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
   describe('ProviderConfig', () => {
     test('should have required apiKey and optional properties', () => {
       const minimalConfig: ProviderConfig = {
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
 
       strictEqual(minimalConfig.apiKey, 'test-key');
@@ -63,7 +62,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
         baseUrl: 'https://api.example.com',
         timeout: 30000,
         retries: 3,
-        model: 'gpt-4'
+        model: 'gpt-4',
       };
 
       strictEqual(fullConfig.apiKey, 'test-key');
@@ -77,7 +76,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
   describe('GenerationOptions', () => {
     test('should have required prompt and optional parameters', () => {
       const minimalOptions: GenerationOptions = {
-        prompt: 'Hello, world!'
+        prompt: 'Hello, world!',
       };
 
       strictEqual(minimalOptions.prompt, 'Hello, world!');
@@ -93,7 +92,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
         frequencyPenalty: 0.1,
         presencePenalty: 0.1,
         stop: ['\\n', 'END'],
-        seed: 42
+        seed: 42,
       };
 
       strictEqual(fullOptions.temperature, 0.7);
@@ -108,7 +107,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
       const usage: TokenUsage = {
         promptTokens: 10,
         completionTokens: 20,
-        totalTokens: 30
+        totalTokens: 30,
       };
 
       const metadata: ResponseMetadata = {
@@ -117,7 +116,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
         timestamp: new Date('2024-01-01'),
         provider: 'openai',
         responseTime: 1500,
-        cached: false
+        cached: false,
       };
 
       const response: LLMResponse = {
@@ -126,7 +125,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
         model: 'gpt-4',
         finishReason: 'stop',
         usage,
-        metadata
+        metadata,
       };
 
       strictEqual(response.id, 'resp-456');
@@ -144,7 +143,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
         'length',
         'content_filter',
         'tool_calls',
-        'error'
+        'error',
       ];
 
       strictEqual(reasons.length, 5);
@@ -161,7 +160,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
       const usage: TokenUsage = {
         promptTokens: 15,
         completionTokens: 25,
-        totalTokens: 40
+        totalTokens: 40,
       };
 
       strictEqual(usage.promptTokens + usage.completionTokens, usage.totalTokens);
@@ -173,13 +172,13 @@ describe('LLM Provider Types - Phase 1.1', () => {
       const healthyStatus: ProviderHealth = {
         status: 'healthy',
         latency: 250,
-        lastChecked: new Date()
+        lastChecked: new Date(),
       };
 
       const unhealthyStatus: ProviderHealth = {
         status: 'unhealthy',
         lastChecked: new Date(),
-        error: 'Connection timeout'
+        error: 'Connection timeout',
       };
 
       strictEqual(healthyStatus.status, 'healthy');
@@ -199,8 +198,8 @@ describe('LLM Provider Types - Phase 1.1', () => {
         userAgent: 'deep-agents/1.0.0',
         metadata: {
           userId: 'user-123',
-          sessionId: 'sess-456'
-        }
+          sessionId: 'sess-456',
+        },
       };
 
       strictEqual(context.requestId, 'req-789');
@@ -214,12 +213,12 @@ describe('LLM Provider Types - Phase 1.1', () => {
     test('should represent validation success and failure', () => {
       const success: ValidationResult = {
         valid: true,
-        errors: []
+        errors: [],
       };
 
       const failure: ValidationResult = {
         valid: false,
-        errors: ['Missing API key', 'Invalid timeout value']
+        errors: ['Missing API key', 'Invalid timeout value'],
       };
 
       strictEqual(success.valid, true);
@@ -234,7 +233,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
   describe('ProviderType', () => {
     test('should support all provider types', () => {
       const types: ProviderType[] = ['openai', 'anthropic', 'ollama'];
-      
+
       strictEqual(types.length, 3);
       ok(types.includes('openai'));
       ok(types.includes('anthropic'));
@@ -250,11 +249,11 @@ describe('LLM Provider Types - Phase 1.1', () => {
         info: {
           name: 'mock-provider',
           version: '1.0.0',
-          capabilities: ['text-generation']
+          capabilities: ['text-generation'],
         },
         config: {
-          apiKey: 'mock-key'
-        }
+          apiKey: 'mock-key',
+        },
       };
 
       strictEqual(mockProvider.info?.name, 'mock-provider');
@@ -265,7 +264,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
       // Validates factory interface structure
       const mockValidation: ValidationResult = {
         valid: true,
-        errors: []
+        errors: [],
       };
 
       strictEqual(mockValidation.valid, true);
@@ -275,7 +274,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
     test('ProviderRegistry interface should define required methods', () => {
       // Validates registry interface structure
       const providerTypes: readonly ProviderType[] = ['openai', 'anthropic', 'ollama'];
-      
+
       strictEqual(providerTypes.length, 3);
       ok(providerTypes.includes('openai'));
     });
@@ -285,7 +284,7 @@ describe('LLM Provider Types - Phase 1.1', () => {
     test('readonly properties should maintain functional programming principles', () => {
       const config: ProviderConfig = {
         apiKey: 'test-key',
-        timeout: 5000
+        timeout: 5000,
       };
 
       // These should compile without error due to readonly constraints
@@ -300,14 +299,14 @@ describe('LLM Provider Types - Phase 1.1', () => {
         usage: {
           promptTokens: 1,
           completionTokens: 1,
-          totalTokens: 2
+          totalTokens: 2,
         },
         metadata: {
           model: 'test-model',
           timestamp: new Date(),
           provider: 'test',
-          responseTime: 100
-        }
+          responseTime: 100,
+        },
       };
 
       strictEqual(response.id, 'test-id');
